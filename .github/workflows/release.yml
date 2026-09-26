@@ -1,0 +1,79 @@
+# Empaquetado: cuando cambia la versión de package.json en main, ejecuta
+# las pruebas y publica un Release (etiqueta vX.Y.Z con el .zip del código)
+# y el paquete npm en GitHub Packages. Si la versión ya tiene etiqueta, no
+# hace nada.
+name: Empaquetado
+
+on:
+  push:
+    branches: [main]
+    paths: [package.json]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  packages: write
+
+concurrency:
+  group: empaquetado
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://npm.pkg.github.com
+          scope: '@jacksonmultitech'
+
+      - name: Leer la versión
+        id: version
+        run: echo "value=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Comprobar si ya existe la etiqueta
+        id: tag
+        run: |
+          if git ls-remote --exit-code --tags origin "refs/tags/v${{ steps.version.outputs.value }}" > /dev/null; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "La versión v${{ steps.version.outputs.value }} ya está publicada."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Instalar dependencias y probar
+        if: steps.tag.outputs.exists == 'false'
+        run: |
+          npm ci
+          npm test
+
+      - name: Armar el paquete
+        if: steps.tag.outputs.exists == 'false'
+        env:
+          VERSION: ${{ steps.version.outputs.value }}
+        run: |
+          mkdir -p dist
+          npm pack --pack-destination dist
+          zip -r "dist/mcp-minecraft-skins-editor-v${VERSION}.zip" api lib public scripts test vercel.json package.json package-lock.json README.md LICENSE CHANGELOG.md .gitignore
+          awk -v v="$VERSION" '/^## \[/{p = index($0, "[" v "]") > 0; next} p' CHANGELOG.md > dist/notas.md
+          ls -l dist
+
+      - name: Publicar en GitHub Packages
+        if: steps.tag.outputs.exists == 'false'
+        run: npm publish dist/*.tgz
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Crear el Release
+        if: steps.tag.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.value }}
+        run: |
+          gh release create "v${VERSION}" dist/*.zip dist/*.tgz \
+            --target "$GITHUB_SHA" \
+            --title "MCP del Editor de Skins de Minecraft v${VERSION}" \
+            --notes-file dist/notas.md
