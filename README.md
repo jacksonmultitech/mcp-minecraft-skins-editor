@@ -4,8 +4,8 @@ Servidor [MCP](https://modelcontextprotocol.io) que permite a Claude **crear y e
 
 > 🤖 **Todo este proyecto fue creado con Claude AI "Opus 5.5"** (Anthropic): el servidor, las herramientas MCP, la documentación y las pruebas.
 
-- Endpoint MCP: `https://<tu-proyecto>.vercel.app/mcp` (HTTP “streamable”, sin autenticación, sin estado).
-- Página informativa con el estado del servicio: `https://<tu-proyecto>.vercel.app/`.
+- Endpoint MCP: `https://editor-skins-mcp.vercel.app/mcp` (HTTP “streamable”, sin autenticación, sin estado).
+- Página informativa con el estado del servicio: `https://editor-skins-mcp.vercel.app/`.
 
 ## Cómo funciona
 
@@ -71,8 +71,8 @@ Si cambias el dominio del servidor, actualiza `REMOTE.DEFAULT_BRIDGE_URL` en `js
 
 ## Agregar el conector en Claude
 
-- **claude.ai / Claude Desktop:** Configuración → Conectores → Agregar conector personalizado → pega `https://<tu-proyecto>.vercel.app/mcp`.
-- **Claude Code:** `claude mcp add --transport http skins https://<tu-proyecto>.vercel.app/mcp`
+- **claude.ai / Claude Desktop:** Configuración → Conectores → Agregar conector personalizado → pega `https://editor-skins-mcp.vercel.app/mcp`.
+- **Claude Code:** `claude mcp add --transport http skins https://editor-skins-mcp.vercel.app/mcp`
 
 Luego abre el editor, pulsa **Conectar con Claude → Conectar** y escribe en Claude: *“Usa el editor de skins con el código XXXX-XXXX-XXXX y hazme…”*.
 
