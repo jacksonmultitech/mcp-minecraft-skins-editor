@@ -7,7 +7,7 @@ name: Empaquetado
 on:
   push:
     branches: [main]
-    paths: [package.json]
+    paths: [package.json, .github/workflows/release.yml]
   workflow_dispatch:
 
 permissions:
@@ -22,11 +22,11 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 22
           registry-url: https://npm.pkg.github.com
           scope: '@jacksonmultitech'
 
@@ -63,7 +63,7 @@ jobs:
 
       - name: Publicar en GitHub Packages
         if: steps.tag.outputs.exists == 'false'
-        run: npm publish dist/*.tgz
+        run: npm publish ./dist/*.tgz
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
