@@ -1,7 +1,7 @@
 /**
  * @file api/bridge/poll.js
  * POST /api/bridge/poll  { code, token }  →  { commands: [...] }
- * El editor consulta periódicamente si Claude envió órdenes.
+ * El editor consulta periódicamente si el agente envió órdenes.
  */
 import { poll } from '../../lib/relay.js';
 import { bridgeHandler, readJson } from '../../lib/http.js';

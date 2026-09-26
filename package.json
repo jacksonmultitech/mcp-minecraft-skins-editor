@@ -1,7 +1,7 @@
 {
   "name": "@jacksonmultitech/mcp-minecraft-skins-editor",
   "version": "1.0.0",
-  "description": "Servidor MCP que permite a Claude pintar en vivo en el Editor de Skins de Minecraft.",
+  "description": "Servidor MCP que permite a cualquier agente de IA pintar en vivo en el Editor de Skins de Minecraft.",
   "type": "module",
   "license": "MIT",
   "author": "jacksonmultitech",
