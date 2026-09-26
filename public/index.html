@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es-419">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MCP · Editor de Skins de Minecraft</title>
+  <meta name="description" content="Servidor MCP que permite a Claude crear y editar skins de Minecraft en vivo dentro del Editor de Skins.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%231f7a62'/%3E%3Crect x='3' y='5' width='3' height='2' fill='%23fff'/%3E%3Crect x='10' y='5' width='3' height='2' fill='%23fff'/%3E%3Crect x='5' y='10' width='6' height='2' fill='%23143b38'/%3E%3C/svg%3E">
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #eef0f3; --surface: #fff; --surface-2: #f5f6f8; --border: #d5d9e0;
+      --text: #1c2027; --muted: #5b6472; --accent: #1f7a62; --accent-soft: #d8efe7; --accent-text: #fff;
+      --warn-soft: #fff1d6; --warn: #a86400;
+      --font: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", Ubuntu, sans-serif;
+      --mono: ui-monospace, "Cascadia Code", "SF Mono", Menlo, Consolas, monospace;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        color-scheme: dark;
+        --bg: #15171b; --surface: #1d2026; --surface-2: #23272e; --border: #343a44;
+        --text: #e8eaee; --muted: #9aa3b2; --accent: #3cc39b; --accent-soft: #173a31; --accent-text: #08110e;
+        --warn-soft: #3a2b12; --warn: #f5b453;
+      }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 1rem/1.6 var(--font); padding-inline: 16px; }
+    main { max-width: 760px; margin: 0 auto; padding-block: 40px 64px; }
+    h1 { font-size: clamp(1.6rem, 4vw, 2.2rem); line-height: 1.2; margin: 0 0 8px; text-wrap: balance; }
+    h2 { font-size: 1.2rem; margin: 36px 0 12px; }
+    p, ol, ul { margin: 0 0 12px; }
+    a { color: var(--accent); }
+    code, kbd { font-family: var(--mono); font-size: .9em; }
+    .lead { color: var(--muted); font-size: 1.08rem; }
+    .status { display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px; border-radius: 999px; background: var(--surface); border: 1px solid var(--border); font-size: .85rem; margin-bottom: 16px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+    .dot.ok { background: #2fb36d; } .dot.bad { background: #d9534f; }
+    .url { display: flex; gap: 8px; align-items: center; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); overflow-x: auto; }
+    .url code { flex: 1; white-space: nowrap; }
+    button { font: inherit; font-size: .85rem; font-weight: 600; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--accent); background: var(--accent); color: var(--accent-text); cursor: pointer; }
+    .steps li { margin-bottom: 8px; }
+    .card { padding: 14px 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+    .note { padding: 12px 16px; border-left: 4px solid var(--warn); background: var(--warn-soft); border-radius: 6px; font-size: .93rem; }
+    .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; }
+    table { width: 100%; border-collapse: collapse; font-size: .9rem; background: var(--surface); }
+    th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    th { background: var(--surface-2); font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+    tr:last-child td { border-bottom: 0; }
+    td code { white-space: nowrap; }
+    footer { margin-top: 48px; color: var(--muted); font-size: .85rem; }
+  </style>
+</head>
+<body>
+  <main>
+    <p class="status"><span class="dot" id="dot"></span><span id="status">Comprobando el servicio…</span></p>
+    <h1>MCP del Editor de Skins de Minecraft</h1>
+    <p class="lead">Conecta a Claude con el <a href="https://jacksonmultitech.github.io/minecraft-skins-editor/">Editor de Skins</a> para que cree y edite tu skin en vivo mientras tú miras. Cada cambio de Claude se puede deshacer con <kbd>Ctrl</kbd>+<kbd>Z</kbd>.</p>
+
+    <h2>1. Agrega el conector en Claude</h2>
+    <p>Usa esta URL como <strong>conector personalizado</strong> (servidor MCP remoto, sin autenticación):</p>
+    <div class="url"><code id="mcp-url">https://…/mcp</code><button type="button" id="copy">Copiar</button></div>
+    <ul>
+      <li><strong>claude.ai o Claude Desktop:</strong> Configuración → Conectores → Agregar conector personalizado → pega la URL.</li>
+      <li><strong>Claude Code:</strong> <code id="cc-cmd">claude mcp add --transport http skins https://…/mcp</code></li>
+    </ul>
+    <p class="note">Los nombres de los menús pueden variar según la versión de Claude.</p>
+
+    <h2>2. Conecta tu editor</h2>
+    <ol class="steps">
+      <li>Abre el <a href="https://jacksonmultitech.github.io/minecraft-skins-editor/">Editor de Skins</a>.</li>
+      <li>Pulsa <strong>Conectar con Claude</strong> y luego <strong>Conectar</strong>. Aparece un código como <code>K7QM-X2PD-9RTA</code>.</li>
+      <li>Dile a Claude algo como: <em>"Usa el editor de skins con el código K7QM-X2PD-9RTA y hazme un caballero con armadura azul"</em>.</li>
+    </ol>
+
+    <h2>Herramientas disponibles</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Herramienta</th><th>Qué hace</th></tr></thead>
+        <tbody>
+          <tr><td><code>get_uv_layout</code></td><td>Mapa de la textura 64×64: dónde está cada parte y cara.</td></tr>
+          <tr><td><code>color_harmony</code> · <code>tonal_scale</code></td><td>Armonías de color y rampas de sombreado (normal o pixel art).</td></tr>
+          <tr><td><code>get_editor_state</code></td><td>Modelo, colores usados y avisos de compatibilidad.</td></tr>
+          <tr><td><code>get_skin_image</code></td><td>Imagen del personaje en 3D o de la textura plana, para que Claude revise su trabajo.</td></tr>
+          <tr><td><code>fill_face</code> · <code>draw_face_pattern</code> · <code>paint_pixels</code></td><td>Pintar: caras completas, dibujos tipo arte ASCII (ojos, boca…) y píxeles sueltos.</td></tr>
+          <tr><td><code>add_noise</code> · <code>mirror_side</code> · <code>clear_layer</code></td><td>Textura, simetría y limpieza de capas.</td></tr>
+          <tr><td><code>new_skin</code> · <code>set_model</code></td><td>Empezar de cero o desde plantilla; brazos clásicos (4 px) o delgados (3 px).</td></tr>
+          <tr><td><code>undo</code> · <code>redo</code> · <code>download_skin</code></td><td>Deshacer, rehacer y descargar el PNG.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>Privacidad y seguridad</h2>
+    <ul>
+      <li>Solo quien conozca el código de tu sesión puede enviar órdenes a tu editor. El código vence a las 3 horas, y el editor se desconecta solo tras 30 minutos sin actividad.</li>
+      <li>El servidor guarda temporalmente las órdenes pendientes (segundos) y no guarda tus skins.</li>
+      <li>El puente del editor solo acepta peticiones desde la página oficial del editor.</li>
+    </ul>
+
+    <footer>Proyecto independiente, sin afiliación con Mojang Studios ni Microsoft. Código: <a href="https://github.com/jacksonmultitech/mcp-minecraft-skins-editor">mcp-minecraft-skins-editor</a>.</footer>
+  </main>
+  <script>
+    // Muestra la URL real del servidor y el estado del servicio.
+    const url = `${location.origin}/mcp`;
+    document.getElementById('mcp-url').textContent = url;
+    document.getElementById('cc-cmd').textContent = `claude mcp add --transport http skins ${url}`;
+    document.getElementById('copy').addEventListener('click', async (e) => {
+      try { await navigator.clipboard.writeText(url); e.target.textContent = 'Copiado'; } catch { e.target.textContent = 'Selecciónalo y copia'; }
+    });
+    fetch('/api/health').then((r) => r.json()).then((h) => {
+      document.getElementById('dot').className = `dot ${h.ok ? 'ok' : 'bad'}`;
+      document.getElementById('status').textContent = h.ok ? `Servicio activo · v${h.server.version}` : `Servicio sin almacenamiento: ${h.warning ?? h.error ?? 'revisar'}`;
+    }).catch(() => { document.getElementById('status').textContent = 'No se pudo comprobar el servicio'; });
+  </script>
+</body>
+</html>

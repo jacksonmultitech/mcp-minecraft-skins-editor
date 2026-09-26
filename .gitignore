@@ -1,0 +1,18 @@
+# Dependencias
+node_modules/
+
+# Vercel
+.vercel/
+
+# Variables de entorno (nunca subir tokens)
+.env*
+
+# Registros
+npm-debug.log*
+*.log
+
+# Sistema operativo y editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
