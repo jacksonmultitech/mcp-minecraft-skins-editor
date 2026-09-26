@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>MCP · Editor de Skins de Minecraft</title>
-  <meta name="description" content="Servidor MCP que permite a Claude crear y editar skins de Minecraft en vivo dentro del Editor de Skins.">
+  <meta name="description" content="Servidor MCP que permite a cualquier agente de IA crear y editar skins de Minecraft en vivo dentro del Editor de Skins.">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%231f7a62'/%3E%3Crect x='3' y='5' width='3' height='2' fill='%23fff'/%3E%3Crect x='10' y='5' width='3' height='2' fill='%23fff'/%3E%3Crect x='5' y='10' width='6' height='2' fill='%23143b38'/%3E%3C/svg%3E">
   <style>
     :root {
@@ -37,6 +37,7 @@
     .dot.ok { background: #2fb36d; } .dot.bad { background: #d9534f; }
     .url { display: flex; gap: 8px; align-items: center; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); overflow-x: auto; }
     .url code { flex: 1; white-space: nowrap; }
+    .url + .table-wrap { margin-top: 12px; }
     button { font: inherit; font-size: .85rem; font-weight: 600; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--accent); background: var(--accent); color: var(--accent-text); cursor: pointer; }
     .steps li { margin-bottom: 8px; }
     .card { padding: 14px 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
@@ -47,6 +48,7 @@
     th { background: var(--surface-2); font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
     tr:last-child td { border-bottom: 0; }
     td code { white-space: nowrap; }
+    td code[data-url-template] { white-space: normal; overflow-wrap: anywhere; }
     footer { margin-top: 48px; color: var(--muted); font-size: .85rem; }
   </style>
 </head>
@@ -54,22 +56,32 @@
   <main>
     <p class="status"><span class="dot" id="dot"></span><span id="status">Comprobando el servicio…</span></p>
     <h1>MCP del Editor de Skins de Minecraft</h1>
-    <p class="lead">Conecta a Claude con el <a href="https://jacksonmultitech.github.io/minecraft-skins-editor/">Editor de Skins</a> para que cree y edite tu skin en vivo mientras tú miras. Cada cambio de Claude se puede deshacer con <kbd>Ctrl</kbd>+<kbd>Z</kbd>.</p>
+    <p class="lead">Conecta tu agente de IA con el <a href="https://jacksonmultitech.github.io/minecraft-skins-editor/">Editor de Skins</a> para que cree y edite tu skin en vivo mientras tú miras. Funciona con cualquier agente compatible con MCP por HTTP (Claude, ChatGPT, GitHub Copilot, Cursor, Gemini CLI…). Cada cambio se puede deshacer con <kbd>Ctrl</kbd>+<kbd>Z</kbd>.</p>
 
-    <h2>1. Agrega el conector en Claude</h2>
-    <p>Usa esta URL como <strong>conector personalizado</strong> (servidor MCP remoto, sin autenticación):</p>
+    <h2>1. Agrega el servidor a tu agente</h2>
+    <p>Usa esta URL como <strong>servidor MCP remoto</strong> de tipo HTTP ("streamable HTTP"), sin autenticación:</p>
     <div class="url"><code id="mcp-url">https://…/mcp</code><button type="button" id="copy">Copiar</button></div>
-    <ul>
-      <li><strong>claude.ai o Claude Desktop:</strong> Configuración → Conectores → Agregar conector personalizado → pega la URL.</li>
-      <li><strong>Claude Code:</strong> <code id="cc-cmd">claude mcp add --transport http skins https://…/mcp</code></li>
-    </ul>
-    <p class="note">Los nombres de los menús pueden variar según la versión de Claude.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Agente</th><th>Cómo agregarlo</th></tr></thead>
+        <tbody>
+          <tr><td>Claude (web y escritorio)</td><td>Configuración → Conectores → Agregar conector personalizado → pega la URL.</td></tr>
+          <tr><td>Claude Code</td><td><code data-url-template="claude mcp add --transport http skins {url}"></code></td></tr>
+          <tr><td>ChatGPT</td><td>Con el modo desarrollador activo: Configuración → Conectores → Crear → pega la URL.</td></tr>
+          <tr><td>VS Code (Copilot, modo agente)</td><td><code>.vscode/mcp.json</code>: <code data-url-template='{ "servers": { "skins": { "type": "http", "url": "{url}" } } }'></code></td></tr>
+          <tr><td>Cursor</td><td><code>~/.cursor/mcp.json</code>: <code data-url-template='{ "mcpServers": { "skins": { "url": "{url}" } } }'></code></td></tr>
+          <tr><td>Gemini CLI</td><td><code>~/.gemini/settings.json</code>: <code data-url-template='{ "mcpServers": { "skins": { "httpUrl": "{url}" } } }'></code></td></tr>
+          <tr><td>Otros</td><td>Busca "conectores" o "servidores MCP" en su configuración y elige el tipo HTTP.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">Los nombres de los menús pueden variar según la versión de cada agente.</p>
 
     <h2>2. Conecta tu editor</h2>
     <ol class="steps">
       <li>Abre el <a href="https://jacksonmultitech.github.io/minecraft-skins-editor/">Editor de Skins</a>.</li>
-      <li>Pulsa <strong>Conectar con Claude</strong> y luego <strong>Conectar</strong>. Aparece un código como <code>K7QM-X2PD-9RTA</code>.</li>
-      <li>Dile a Claude algo como: <em>"Usa el editor de skins con el código K7QM-X2PD-9RTA y hazme un caballero con armadura azul"</em>.</li>
+      <li>Pulsa <strong>Agente IA</strong> y luego <strong>Conectar</strong>. Aparece un código como <code>K7QM-X2PD-9RTA</code>.</li>
+      <li>Dile a tu agente algo como: <em>"Usa el editor de skins con el código K7QM-X2PD-9RTA y hazme un caballero con armadura azul"</em>.</li>
     </ol>
 
     <h2>Herramientas disponibles</h2>
@@ -80,7 +92,7 @@
           <tr><td><code>get_uv_layout</code></td><td>Mapa de la textura 64×64: dónde está cada parte y cara.</td></tr>
           <tr><td><code>color_harmony</code> · <code>tonal_scale</code></td><td>Armonías de color y rampas de sombreado (normal o pixel art).</td></tr>
           <tr><td><code>get_editor_state</code></td><td>Modelo, colores usados y avisos de compatibilidad.</td></tr>
-          <tr><td><code>get_skin_image</code></td><td>Imagen del personaje en 3D o de la textura plana, para que Claude revise su trabajo.</td></tr>
+          <tr><td><code>get_skin_image</code></td><td>Imagen del personaje en 3D o de la textura plana, para que el agente revise su trabajo.</td></tr>
           <tr><td><code>fill_face</code> · <code>draw_face_pattern</code> · <code>paint_pixels</code></td><td>Pintar: caras completas, dibujos tipo arte ASCII (ojos, boca…) y píxeles sueltos.</td></tr>
           <tr><td><code>add_noise</code> · <code>mirror_side</code> · <code>clear_layer</code></td><td>Textura, simetría y limpieza de capas.</td></tr>
           <tr><td><code>new_skin</code> · <code>set_model</code></td><td>Empezar de cero o desde plantilla; brazos clásicos (4 px) o delgados (3 px).</td></tr>
@@ -102,7 +114,7 @@
     // Muestra la URL real del servidor y el estado del servicio.
     const url = `${location.origin}/mcp`;
     document.getElementById('mcp-url').textContent = url;
-    document.getElementById('cc-cmd').textContent = `claude mcp add --transport http skins ${url}`;
+    document.querySelectorAll('[data-url-template]').forEach((el) => { el.textContent = el.dataset.urlTemplate.replace('{url}', url); });
     document.getElementById('copy').addEventListener('click', async (e) => {
       try { await navigator.clipboard.writeText(url); e.target.textContent = 'Copiado'; } catch { e.target.textContent = 'Selecciónalo y copia'; }
     });

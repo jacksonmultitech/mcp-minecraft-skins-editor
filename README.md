@@ -1,6 +1,6 @@
 # MCP del Editor de Skins de Minecraft
 
-Servidor [MCP](https://modelcontextprotocol.io) que permite a Claude **crear y editar skins en vivo** dentro del [Editor de Skins de Minecraft](https://jacksonmultitech.github.io/minecraft-skins-editor/). Tú ves cada cambio en el editor mientras Claude pinta, y puedes deshacerlo con `Ctrl`+`Z`.
+Servidor [MCP](https://modelcontextprotocol.io) que permite a **cualquier agente de IA** compatible con MCP (Claude, ChatGPT, GitHub Copilot, Cursor, Gemini CLI…) **crear y editar skins en vivo** dentro del [Editor de Skins de Minecraft](https://jacksonmultitech.github.io/minecraft-skins-editor/). Tú ves cada cambio en el editor mientras el agente pinta, y puedes deshacerlo con `Ctrl`+`Z`.
 
 > 🤖 **Todo este proyecto fue creado con Claude AI "Opus 5.5"** (Anthropic): el servidor, las herramientas MCP, la documentación y las pruebas.
 
@@ -10,14 +10,14 @@ Servidor [MCP](https://modelcontextprotocol.io) que permite a Claude **crear y e
 ## Cómo funciona
 
 ```
- Claude ──(MCP / HTTP)──▶ /mcp ──▶ cola en Upstash Redis ◀──(consulta)── Editor (navegador)
+ Agente ──(MCP / HTTP)──▶ /mcp ──▶ cola en Upstash Redis ◀──(consulta)── Editor (navegador)
         ◀── resultado ──────────── resultados en Redis ───(responde)──▶
 ```
 
-1. En el editor, **Conectar con Claude** crea una sesión: el servidor devuelve un **código** (por ejemplo `K7QM-X2PD-9RTA`) y un **token** secreto que nunca sale del navegador.
-2. Le das el código a Claude. Cada herramienta que usa Claude deja una orden en la cola de esa sesión.
+1. En el editor, **Agente IA → Conectar** crea una sesión: el servidor devuelve un **código** (por ejemplo `K7QM-X2PD-9RTA`) y un **token** secreto que nunca sale del navegador.
+2. Le das el código a tu agente. Cada herramienta que usa el agente deja una orden en la cola de esa sesión.
 3. El editor consulta la cola (cada 350 ms cuando hay actividad, hasta 3 s en reposo), ejecuta las órdenes con su propio motor y devuelve el resultado.
-4. La herramienta espera el resultado (hasta ~20 s) y se lo entrega a Claude.
+4. La herramienta espera el resultado (hasta ~20 s) y se lo entrega al agente.
 
 Como el editor ejecuta todo, el servidor **no guarda skins**: solo órdenes y resultados durante segundos.
 
@@ -35,7 +35,7 @@ Como el editor ejecuta todo, el servidor **no guarda skins**: solo órdenes y re
 | `add_noise` · `mirror_side` · `clear_layer` | Textura, simetría y limpieza de capas. | Sí |
 | `undo` · `redo` · `download_skin` | Historial y descarga del PNG. | Sí |
 
-Los errores se devuelven en español y con la causa concreta (por ejemplo, “La cara head.base.front mide 8×8…”), para que Claude pueda corregirse solo.
+Los errores se devuelven en español y con la causa concreta (por ejemplo, “La cara head.base.front mide 8×8…”), para que el agente pueda corregirse solo.
 
 ## Estructura
 
@@ -67,14 +67,22 @@ Variables de entorno reconocidas:
 | `KV_REST_API_URL` + `KV_REST_API_TOKEN` | Credenciales de Upstash (las crea la integración). También sirven `UPSTASH_REDIS_REST_URL`/`_TOKEN` o cualquier `<PREFIJO>_REST_API_URL`/`_TOKEN`. |
 | `ALLOWED_ORIGINS` | Opcional. Orígenes extra (separados por comas) que pueden usar el puente, además de `https://jacksonmultitech.github.io`. |
 
-Si cambias el dominio del servidor, actualiza `REMOTE.DEFAULT_BRIDGE_URL` en `js/config.js` del editor (o usa *Opciones avanzadas* en el diálogo “Conectar con Claude”).
+Si cambias el dominio del servidor, actualiza `REMOTE.DEFAULT_BRIDGE_URL` en `js/config.js` del editor (o usa *Opciones avanzadas* en el diálogo “Conectar con un agente de IA”).
 
-## Agregar el conector en Claude
+## Agregar el servidor a tu agente
 
-- **claude.ai / Claude Desktop:** Configuración → Conectores → Agregar conector personalizado → pega `https://editor-skins-mcp.vercel.app/mcp`.
-- **Claude Code:** `claude mcp add --transport http skins https://editor-skins-mcp.vercel.app/mcp`
+Funciona con cualquier agente que admita servidores MCP remotos por HTTP ("streamable HTTP"), sin autenticación. Los menús pueden cambiar entre versiones:
 
-Luego abre el editor, pulsa **Conectar con Claude → Conectar** y escribe en Claude: *“Usa el editor de skins con el código XXXX-XXXX-XXXX y hazme…”*.
+| Agente | Cómo agregarlo |
+|---|---|
+| Claude (web y escritorio) | Configuración → Conectores → Agregar conector personalizado → pega `https://editor-skins-mcp.vercel.app/mcp`. |
+| Claude Code | `claude mcp add --transport http skins https://editor-skins-mcp.vercel.app/mcp` |
+| ChatGPT | Con el modo desarrollador activo: Configuración → Conectores → Crear → pega la URL. |
+| VS Code (Copilot, modo agente) | `.vscode/mcp.json`: `{ "servers": { "skins": { "type": "http", "url": "https://editor-skins-mcp.vercel.app/mcp" } } }` |
+| Cursor | `~/.cursor/mcp.json`: `{ "mcpServers": { "skins": { "url": "https://editor-skins-mcp.vercel.app/mcp" } } }` |
+| Gemini CLI | `~/.gemini/settings.json`: `{ "mcpServers": { "skins": { "httpUrl": "https://editor-skins-mcp.vercel.app/mcp" } } }` |
+
+Luego abre el editor, pulsa **Agente IA → Conectar** y escribe en tu agente: *“Usa el editor de skins con el código XXXX-XXXX-XXXX y hazme…”*.
 
 ## Desarrollo local
 
