@@ -2,6 +2,16 @@
 
 Todas las versiones siguen el [versionado semántico](https://semver.org/lang/es/) de tres dígitos (MAYOR.MENOR.PARCHE). Cada versión se publica como *Release* (con el `.zip` del código) y como paquete en GitHub Packages.
 
+## [1.1.0] - 2026-10-02
+
+### Cambiado
+- Funciona con **cualquier agente de IA** compatible con MCP: las instrucciones del servidor, la descripción de `session_code` y los errores del relevo indican el nuevo botón del editor **Agente IA → Conectar**.
+- README y página informativa con instrucciones para Claude, Claude Code, ChatGPT, VS Code (Copilot), Cursor, Gemini CLI y otros agentes; los ejemplos se completan con la URL real del servidor.
+- `lib/editor-core` sincronizado con el editor 1.1.0.
+
+### Agregado
+- Prueba que comprueba que la versión que informa el servidor coincide con `package.json` (11 pruebas).
+
 ## [1.0.0] - 2026-09-26
 
 Primera versión publicada.
