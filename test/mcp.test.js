@@ -69,3 +69,11 @@ test('errores legibles: código inválido y color inválido', async () => {
   assert.ok(badColor.isError);
   assert.match(badColor.content[0].text, /Color no válido/);
 });
+
+test('la versión que informa el servidor coincide con package.json', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const { SERVER_INFO } = await import('../lib/tools.js');
+  const pkg = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
+  assert.equal(SERVER_INFO.version, pkg.version);
+  assert.equal(client.getServerVersion()?.version, pkg.version);
+});
